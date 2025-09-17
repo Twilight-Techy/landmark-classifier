@@ -1,0 +1,44 @@
+# Ignore dataset files
+landmark_images/
+*.pkl
+*.bin
+data/
+datasets/
+*.csv
+*.tsv
+*.txt
+*.jsonl
+*.json
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.h5
+*.npy
+*.npz
+
+# Ignore downloaded S3 / captured data
+captured_data/
+*.jpg
+*.jpeg
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore environment files
+.env
+*.env
+.venv/
+venv/
+ENV/
+
+# Ignore IDE/editor configs
+.vscode/
+.idea/
+*.swp

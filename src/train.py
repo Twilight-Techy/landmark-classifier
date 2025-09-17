@@ -60,16 +60,15 @@ def valid_one_epoch(valid_dataloader, model, loss):
     """
     Validate at the end of one epoch
     """
+    correct = 0
+    total = 0
+    valid_loss = 0.0
 
     with torch.no_grad():
-
-        # set the model to evaluation mode
         model.eval()
-
         if torch.cuda.is_available():
             model = model.cuda()
 
-        valid_loss = 0.0
         for batch_idx, (data, target) in tqdm(
             enumerate(valid_dataloader),
             desc="Validating",
@@ -77,21 +76,23 @@ def valid_one_epoch(valid_dataloader, model, loss):
             leave=True,
             ncols=80,
         ):
-            # move data to GPU
             if torch.cuda.is_available():
                 data, target = data.cuda(), target.cuda()
 
-            # 1. forward pass: compute predicted outputs by passing inputs to the model
             output = model(data)
-            # 2. calculate the loss
             loss_value = loss(output, target)
 
-            # Calculate average validation loss
             valid_loss = valid_loss + (
                 (1 / (batch_idx + 1)) * (loss_value.data.item() - valid_loss)
             )
 
-    return valid_loss
+            # compute accuracy
+            pred = output.argmax(dim=1)
+            correct += torch.sum(pred.eq(target.data.view_as(pred))).item()
+            total += data.size(0)
+
+    valid_acc = 100. * correct / total
+    return valid_loss, valid_acc
 
 
 def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interactive_tracking=False):
@@ -112,18 +113,15 @@ def optimize(data_loaders, model, optimizer, loss, n_epochs, save_path, interact
     )
 
     for epoch in range(1, n_epochs + 1):
-
-        train_loss = train_one_epoch(
-            data_loaders["train"], model, optimizer, loss
-        )
-
-        valid_loss = valid_one_epoch(data_loaders["valid"], model, loss)
+        train_loss = train_one_epoch(data_loaders["train"], model, optimizer, loss)
+        valid_loss, valid_acc = valid_one_epoch(data_loaders["valid"], model, loss)
 
         # print training/validation statistics
         print(
-            "Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}".format(
-                epoch, train_loss, valid_loss
-            )
+            f"Epoch: {epoch} \t"
+            f"Training Loss: {train_loss:.6f} \t"
+            f"Validation Loss: {valid_loss:.6f} \t"
+            f"Validation Accuracy: {valid_acc:.2f}%"
         )
 
         # If the validation loss decreases by more than 1%, save the model
